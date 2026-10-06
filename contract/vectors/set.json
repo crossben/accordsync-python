@@ -144,6 +144,49 @@
           "visits": 0
         }
       }
+    },
+    {
+      "name": "elements sort by UTF-16 code unit: numbers, then 'a', then '😀' (U+1F600, D83D DE00), then U+E000",
+      "ops": [
+        {
+          "op_id": "a:1",
+          "record": "dossier:1",
+          "field": "docs",
+          "kind": "add",
+          "hlc": "1001:00000:a",
+          "element": ""
+        },
+        {
+          "op_id": "a:2",
+          "record": "dossier:1",
+          "field": "docs",
+          "kind": "add",
+          "hlc": "1002:00000:a",
+          "element": "😀"
+        },
+        {
+          "op_id": "a:3",
+          "record": "dossier:1",
+          "field": "docs",
+          "kind": "add",
+          "hlc": "1003:00000:a",
+          "element": "a"
+        },
+        {
+          "op_id": "a:4",
+          "record": "dossier:1",
+          "field": "docs",
+          "kind": "add",
+          "hlc": "1004:00000:a",
+          "element": 2
+        }
+      ],
+      "expected": {
+        "dossier:1": {
+          "docs": [2, "a", "😀", ""],
+          "visits": 0
+        }
+      }
     }
   ]
 }

@@ -20,3 +20,11 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/accordsync_core"]
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+src = ["src", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# Seeded generators are the point of the law and vector tests; the awkward characters are on purpose.
+"tests/**" = ["S311", "RUF001"]
