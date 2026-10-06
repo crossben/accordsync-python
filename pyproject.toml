@@ -12,7 +12,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.3", "ruff>=0.11", "mypy>=1.15"]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.11",
+    "mypy>=1.15",
+    "uvicorn>=0.54.0",
+    "waitress>=3.0.2",
+    "django-stubs>=6.1.2",
+    "types-waitress>=3.0.1.20260724",
+]
 
 [tool.uv]
 package = false

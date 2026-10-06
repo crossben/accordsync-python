@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PARTS = ["vectors", "protocol/v1"]
+PARTS = ["vectors", "protocol/v1", "conformance"]
 
 
 def json_files(directory: Path) -> dict[str, bytes]:
@@ -39,6 +39,9 @@ def main() -> int:
     for part in PARTS:
         source = json_files(app / part)
         current = json_files(ROOT / "contract" / part)
+        if part == "conformance":
+            # Only the profile: the rest of conformance/ is the TypeScript suite itself.
+            source = {k: v for k, v in source.items() if k == "profile.json"}
         for name in sorted(source.keys() | current.keys()):
             if source.get(name) == current.get(name):
                 continue

@@ -1,0 +1,40 @@
+{
+  "$comment": "The server definition every Accord server configures to run the conformance suite. See PROFILE.md.",
+  "protocolVersion": 1,
+  "schema": {
+    "dossier": {
+      "agent": "lww",
+      "zone": "lww",
+      "client_name": "lww",
+      "status": "conflict",
+      "visits": "counter",
+      "docs": "set"
+    }
+  },
+  "scopes": {
+    "dossier": [
+      { "key": "agent:{agent}", "when": "fields.agent is a string" },
+      { "key": "zone:{zone}", "when": "fields.zone is a string" }
+    ]
+  },
+  "access": {
+    "read": ["agent:{sub}", "zone:{z} for z in zones", "zone:{z} for z in readonly_zones"],
+    "write": ["agent:{sub}", "zone:{z} for z in zones"]
+  },
+  "auth": {
+    "hs256Secret": "accord-conformance-secret-at-least-32-bytes",
+    "issuer": "accord-conformance"
+  },
+  "limits": {
+    "maxPushOps": 20,
+    "maxPullLimit": 10,
+    "maxScopeDelta": 3,
+    "maxBodyBytes": 16384,
+    "maxSkewMs": 60000
+  },
+  "rateLimit": {
+    "perDevice": { "perMinute": 6000, "burst": 100 },
+    "perUser": { "perMinute": 12000, "burst": 200 }
+  },
+  "compaction": { "minOps": 2, "deviceTtlDays": 30, "intervalMs": 0 }
+}

@@ -1,4 +1,4 @@
-"""Accord for Django: an app with the sync endpoints and management commands (built in Y5)."""
+"""Accord for Django: the `accordsync_django` app (URLs, settings, management commands, checks)."""
 
 from accordsync_server import PROTOCOL_VERSION
 

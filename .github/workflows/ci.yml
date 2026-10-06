@@ -139,3 +139,111 @@ jobs:
       - run: python tools/sync_contract.py --check
         env:
           ACCORD_APP_DIR: accord-src
+
+  # The FastAPI and Django example apps (conformance profile) against the shared conformance suite.
+  frameworks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fastapi
+            port: '8855'
+            control: '8856'
+          - name: django
+            port: '8857'
+            control: '8858'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: accord
+          POSTGRES_PASSWORD: accord
+          POSTGRES_DB: accord
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accord" --health-interval 2s --health-retries 30
+    env:
+      ACCORD_DATABASE_URL: postgresql://accord:accord@localhost:5432/accord
+      ACCORD_CONTROL: '1'
+      ACCORD_PORT: ${{ matrix.port }}
+      ACCORD_CONTROL_PORT: ${{ matrix.control }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: crossben/accordsync
+          path: accord-src
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: accord-src/package.json
+      - run: pnpm install --frozen-lockfile
+        working-directory: accord-src
+      - run: uv sync --locked
+      - name: Start the ${{ matrix.name }} example
+        run: |
+          if [ "${{ matrix.name }}" = fastapi ]; then
+            uv run python -m accordsync_fastapi migrate
+            nohup uv run python examples/fastapi_app/app.py > app.log 2>&1 &
+          else
+            uv run python examples/django_app/manage.py check
+            uv run python examples/django_app/manage.py accord_migrate
+            nohup uv run python examples/django_app/serve.py > app.log 2>&1 &
+          fi
+          for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$ACCORD_PORT/health" && exit 0; sleep 1; done
+          cat app.log; exit 1
+      - name: Server conformance suite against ${{ matrix.name }}
+        run: pnpm --filter @accordsync/conformance test
+        working-directory: accord-src
+        env:
+          ACCORD_URL: http://127.0.0.1:${{ matrix.port }}
+          ACCORD_CONTROL_URL: http://127.0.0.1:${{ matrix.control }}
+      - if: failure()
+        run: cat app.log
+
+  # The mixed-server fleet (plan-python.md §0 point 4): the TypeScript reference server (Accord
+  # sources) and the Python server on one PostgreSQL at once, Python and TypeScript devices sending
+  # every request to either through a lossy network, with a compaction and scope changes mid-run.
+  mixed-fleet:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: accord
+          POSTGRES_PASSWORD: accord
+          POSTGRES_DB: accord
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accord" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: crossben/accordsync
+          path: accord-src
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: accord-src/package.json
+      - run: pnpm install --frozen-lockfile
+        working-directory: accord-src
+      - run: uv sync --locked
+      - run: server-interop/run.sh
+        env:
+          ACCORD_DATABASE_URL: postgresql://accord:accord@localhost:5432/accord
+          ACCORD_APP_DIR: ${{ github.workspace }}/accord-src
+          ACCORD_FLEET_SEEDS: 1,2,3,4,5
+      - if: failure()
+        run: tail -n 50 server-interop/.logs/*.log
