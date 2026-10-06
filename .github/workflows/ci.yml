@@ -16,6 +16,19 @@ jobs:
     strategy:
       matrix:
         python: ['3.11', '3.12', '3.13']
+    # The server's PostgreSQL tests create a database per test on this service.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: accord
+          POSTGRES_PASSWORD: accord
+          POSTGRES_DB: accord
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accord" --health-interval 2s --health-retries 30
+    env:
+      ACCORD_TEST_DATABASE_URL: postgresql://accord:accord@localhost:5432/accord
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -53,6 +66,63 @@ jobs:
         env:
           ACCORD_DATABASE_URL: postgres://accord:accord@localhost:5432/accord
           ACCORD_INTEROP_SEEDS: 1,2,3,4,5
+
+  # The Python server against the shared server conformance suite (app/conformance in
+  # crossben/accordsync), plus the ledger tests that run the TypeScript server's own migrations.
+  conformance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: accord
+          POSTGRES_PASSWORD: accord
+          POSTGRES_DB: accord
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accord" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: crossben/accordsync
+          path: accord-src
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: accord-src/package.json
+      - run: pnpm install --frozen-lockfile
+        working-directory: accord-src
+      - run: uv sync --locked
+      - name: Ledger and op_hash tests against the TypeScript server's code
+        run: uv run pytest packages/server -v
+        env:
+          ACCORD_TEST_DATABASE_URL: postgresql://accord:accord@localhost:5432/accord
+          ACCORD_APP_DIR: ${{ github.workspace }}/accord-src
+      - name: Start the Python server with the conformance profile
+        run: |
+          psql postgresql://accord:accord@localhost:5432/accord -c 'create database conformance'
+          nohup uv run python tools/conformance_server.py > conformance-server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8811/health && exit 0; sleep 1; done
+          cat conformance-server.log; exit 1
+        env:
+          ACCORD_DATABASE_URL: postgresql://accord:accord@localhost:5432/conformance
+          ACCORD_PORT: '8811'
+          ACCORD_CONTROL_PORT: '8812'
+          ACCORD_PROFILE: accord-src/conformance/profile.json
+      - name: Server conformance suite
+        run: pnpm --filter @accordsync/conformance test
+        working-directory: accord-src
+        env:
+          ACCORD_URL: http://127.0.0.1:8811
+          ACCORD_CONTROL_URL: http://127.0.0.1:8812
+      - if: failure()
+        run: cat conformance-server.log
 
   # The committed contract/ must match the Accord repository (golden vectors, protocol schemas).
   contract:
