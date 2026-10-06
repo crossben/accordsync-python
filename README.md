@@ -42,6 +42,10 @@ uv run pytest
 implementation must pass them. Refresh it with `python tools/sync_contract.py` (reads `../app`, or
 `ACCORD_APP_DIR`).
 
+`interop/run.sh` runs the Python client against the real Accord server (from npm, on PostgreSQL in
+Docker), alone and in a mixed fleet with TypeScript devices over a lossy network. Needs Docker and
+Node 22+; see [interop/README.md](interop/README.md).
+
 ## Licence
 
 [Apache-2.0](LICENSE).

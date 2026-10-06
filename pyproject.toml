@@ -42,6 +42,6 @@ ignore = ["S101"]
 [tool.mypy]
 strict = true
 python_version = "3.11"
-files = ["packages", "tools"]
-mypy_path = "packages/core/src:packages/client/src:packages/server/src:packages/fastapi/src:packages/django/src"
+files = ["packages", "tools", "interop/tests"]
+mypy_path = "packages/core/src:packages/client/src:packages/server/src:packages/fastapi/src:packages/django/src:interop/tests"
 explicit_package_bases = true

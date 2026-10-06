@@ -27,6 +27,33 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest
 
+  # The Python client against the real server (npm), alone and in a mixed fleet with TypeScript.
+  interop:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: accord
+          POSTGRES_PASSWORD: accord
+          POSTGRES_DB: accord
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accord" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - run: uv sync --locked
+      - run: interop/run.sh
+        env:
+          ACCORD_DATABASE_URL: postgres://accord:accord@localhost:5432/accord
+          ACCORD_INTEROP_SEEDS: 1,2,3,4,5
+
   # The committed contract/ must match the Accord repository (golden vectors, protocol schemas).
   contract:
     runs-on: ubuntu-latest
