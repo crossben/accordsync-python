@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PullItem",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "op"
+      ],
+      "properties": {
+        "type": {
+          "const": "op",
+          "type": "string"
+        },
+        "op": {
+          "$ref": "WireOp"
+        }
+      }
+    },
+    {
+      "description": "A record's state with its older ops folded away: replace the local record with it, then re-apply local unpushed ops (ADR-0008).",
+      "type": "object",
+      "required": [
+        "type",
+        "snapshot"
+      ],
+      "properties": {
+        "type": {
+          "const": "snapshot",
+          "type": "string"
+        },
+        "snapshot": {
+          "type": "object",
+          "required": [
+            "record",
+            "fields"
+          ],
+          "properties": {
+            "record": {
+              "type": "string"
+            },
+            "fields": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "The record left your scope: delete the local copy (ADR-0004).",
+      "type": "object",
+      "required": [
+        "type",
+        "record"
+      ],
+      "properties": {
+        "type": {
+          "const": "exit",
+          "type": "string"
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

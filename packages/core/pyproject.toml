@@ -1,0 +1,22 @@
+[project]
+name = "accordsync-core"
+version = "0.2.0"
+description = "Accord's merge core: hybrid logical clocks, operations, lww, counter, set and conflict."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+keywords = ["offline-first", "sync", "crdt", "local-first"]
+dependencies = [
+]
+
+[project.urls]
+Homepage = "https://accord.benhattab.pro"
+Source = "https://github.com/crossben/accordsync-python"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/accordsync_core"]

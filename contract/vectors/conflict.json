@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "strategy": "conflict",
+  "schema": {
+    "dossier": {
+      "name": "lww",
+      "docs": "set",
+      "visits": "counter",
+      "status": "conflict"
+    }
+  },
+  "cases": [
+    {
+      "name": "concurrent values are all kept",
+      "ops": [
+        {
+          "op_id": "a:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1000:00000:a",
+          "value": "approved",
+          "deps": []
+        },
+        {
+          "op_id": "b:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1001:00000:b",
+          "value": "rejected",
+          "deps": []
+        }
+      ],
+      "expected": {
+        "dossier:1": {
+          "docs": [],
+          "visits": 0,
+          "status": {
+            "conflicted": [
+              {
+                "value": "approved",
+                "opId": "a:1"
+              },
+              {
+                "value": "rejected",
+                "opId": "b:1"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "a sequential edit replaces the value it saw",
+      "ops": [
+        {
+          "op_id": "a:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1000:00000:a",
+          "value": "draft",
+          "deps": []
+        },
+        {
+          "op_id": "b:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1100:00000:b",
+          "value": "submitted",
+          "deps": ["a:1"]
+        }
+      ],
+      "expected": {
+        "dossier:1": {
+          "docs": [],
+          "visits": 0,
+          "status": {
+            "value": "submitted"
+          }
+        }
+      }
+    },
+    {
+      "name": "a resolution keeps an edit it had not seen",
+      "ops": [
+        {
+          "op_id": "a:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1000:00000:a",
+          "value": "approved",
+          "deps": []
+        },
+        {
+          "op_id": "b:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1001:00000:b",
+          "value": "rejected",
+          "deps": []
+        },
+        {
+          "op_id": "c:1",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1002:00000:c",
+          "value": "on_hold",
+          "deps": []
+        },
+        {
+          "op_id": "a:2",
+          "record": "dossier:1",
+          "field": "status",
+          "kind": "assign",
+          "hlc": "1200:00000:a",
+          "value": "approved",
+          "deps": ["a:1", "b:1"]
+        }
+      ],
+      "expected": {
+        "dossier:1": {
+          "docs": [],
+          "visits": 0,
+          "status": {
+            "conflicted": [
+              {
+                "value": "approved",
+                "opId": "a:2"
+              },
+              {
+                "value": "on_hold",
+                "opId": "c:1"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PullResponse",
+  "anyOf": [
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "items",
+        "cursor",
+        "has_more"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "PullItem"
+          }
+        },
+        "cursor": {
+          "minimum": 0,
+          "description": "Send it back as ?cursor= next time.",
+          "type": "integer"
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "device_seq": {
+          "minimum": 0,
+          "description": "Highest op number the server applied from this device: number new ops above it (a device that lost its storage must never reuse an op id).",
+          "type": "integer"
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "description": "Your read scopes changed: push your outbox, drop local data, pull again from cursor 0.",
+      "type": "object",
+      "required": [
+        "resync_required"
+      ],
+      "properties": {
+        "resync_required": {
+          "const": true,
+          "type": "boolean"
+        }
+      }
+    }
+  ]
+}

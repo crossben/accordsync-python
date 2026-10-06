@@ -1,0 +1,47 @@
+[project]
+name = "accordsync-workspace"
+version = "0.2.0"
+description = "Workspace for the Accord Python packages."
+requires-python = ">=3.11"
+dependencies = [
+    "accordsync-core",
+    "accordsync",
+    "accordsync-server",
+    "accordsync-fastapi",
+    "accordsync-django",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.11", "mypy>=1.15"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+accordsync-core = { workspace = true }
+accordsync = { workspace = true }
+accordsync-server = { workspace = true }
+accordsync-fastapi = { workspace = true }
+accordsync-django = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["packages"]
+addopts = ["--import-mode=importlib"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "S", "PT"]
+ignore = ["S101"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+files = ["packages", "tools"]
+mypy_path = "packages/core/src:packages/client/src:packages/server/src:packages/fastapi/src:packages/django/src"
+explicit_package_bases = true

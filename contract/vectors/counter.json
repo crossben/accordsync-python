@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "strategy": "counter",
+  "schema": {
+    "dossier": {
+      "name": "lww",
+      "docs": "set",
+      "visits": "counter",
+      "status": "conflict"
+    }
+  },
+  "cases": [
+    {
+      "name": "every increment counts, including negative ones",
+      "ops": [
+        {
+          "op_id": "a:1",
+          "record": "dossier:1",
+          "field": "visits",
+          "kind": "inc",
+          "hlc": "1000:00000:a",
+          "by": 3
+        },
+        {
+          "op_id": "b:1",
+          "record": "dossier:1",
+          "field": "visits",
+          "kind": "inc",
+          "hlc": "1000:00000:b",
+          "by": -1
+        },
+        {
+          "op_id": "a:2",
+          "record": "dossier:1",
+          "field": "visits",
+          "kind": "inc",
+          "hlc": "1100:00000:a",
+          "by": 2
+        },
+        {
+          "op_id": "c:1",
+          "record": "dossier:1",
+          "field": "visits",
+          "kind": "inc",
+          "hlc": "900:00000:c",
+          "by": 10
+        }
+      ],
+      "expected": {
+        "dossier:1": {
+          "docs": [],
+          "visits": 14
+        }
+      }
+    }
+  ]
+}

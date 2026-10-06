@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PushRequest",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "ops"
+  ],
+  "properties": {
+    "ops": {
+      "description": "WireOp objects, in write order.",
+      "type": "array",
+      "items": {}
+    }
+  }
+}

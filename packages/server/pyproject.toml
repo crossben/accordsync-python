@@ -1,0 +1,25 @@
+[project]
+name = "accordsync-server"
+version = "0.2.0"
+description = "The Accord sync server for Python on PostgreSQL, framework-agnostic."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+keywords = ["offline-first", "sync", "crdt", "local-first"]
+dependencies = [
+    "accordsync-core",
+    "psycopg[binary]>=3.2",
+    "pyjwt[crypto]>=2.10",
+]
+
+[project.urls]
+Homepage = "https://accord.benhattab.pro"
+Source = "https://github.com/crossben/accordsync-python"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/accordsync_server"]

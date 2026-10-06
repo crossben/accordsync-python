@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WireOp",
+  "description": "One operation on one field of one record.",
+  "anyOf": [
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "op_id",
+        "record",
+        "field",
+        "hlc",
+        "kind",
+        "value",
+        "deps"
+      ],
+      "properties": {
+        "op_id": {
+          "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+          "type": "string"
+        },
+        "record": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}:.{1,256}$",
+          "type": "string"
+        },
+        "field": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "hlc": {
+          "pattern": "^[0-9]{1,16}:[0-9]{5}:[A-Za-z0-9_-]{1,64}$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "assign",
+          "type": "string"
+        },
+        "value": {},
+        "deps": {
+          "type": "array",
+          "items": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "op_id",
+        "record",
+        "field",
+        "hlc",
+        "kind",
+        "by"
+      ],
+      "properties": {
+        "op_id": {
+          "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+          "type": "string"
+        },
+        "record": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}:.{1,256}$",
+          "type": "string"
+        },
+        "field": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "hlc": {
+          "pattern": "^[0-9]{1,16}:[0-9]{5}:[A-Za-z0-9_-]{1,64}$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "inc",
+          "type": "string"
+        },
+        "by": {
+          "type": "integer"
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "op_id",
+        "record",
+        "field",
+        "hlc",
+        "kind",
+        "element"
+      ],
+      "properties": {
+        "op_id": {
+          "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+          "type": "string"
+        },
+        "record": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}:.{1,256}$",
+          "type": "string"
+        },
+        "field": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "hlc": {
+          "pattern": "^[0-9]{1,16}:[0-9]{5}:[A-Za-z0-9_-]{1,64}$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "add",
+          "type": "string"
+        },
+        "element": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "deps": {
+          "type": "array",
+          "items": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "op_id",
+        "record",
+        "field",
+        "hlc",
+        "kind",
+        "element",
+        "deps"
+      ],
+      "properties": {
+        "op_id": {
+          "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+          "type": "string"
+        },
+        "record": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}:.{1,256}$",
+          "type": "string"
+        },
+        "field": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "hlc": {
+          "pattern": "^[0-9]{1,16}:[0-9]{5}:[A-Za-z0-9_-]{1,64}$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "remove",
+          "type": "string"
+        },
+        "element": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "deps": {
+          "type": "array",
+          "items": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]{0,15}$",
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}
