@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-workspace"
-version = "0.2.0"
+version = "0.3.0"
 description = "Workspace for the Accord Python packages."
 requires-python = ">=3.11"
 dependencies = [

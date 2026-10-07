@@ -1,0 +1,47 @@
+name: release
+
+# Push a tag like v0.3.0 to publish the five packages to PyPI.
+# Publishing uses PyPI trusted publishing (OIDC): no token is stored. Each project must list this
+# repository, this workflow (release.yml) and the environment `pypi` as a trusted publisher.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - name: Check the tag matches the package versions
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          for p in packages/*/pyproject.toml; do
+            v=$(python -c "import tomllib,sys;print(tomllib.load(open('$p','rb'))['project']['version'])")
+            [ "$v" = "$tag" ] || { echo "$p is $v, tag is $tag"; exit 1; }
+          done
+      - run: uv sync --locked
+      - run: uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest
+      - run: uv build --all-packages -o dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

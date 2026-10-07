@@ -1,6 +1,6 @@
 [project]
 name = "accordsync"
-version = "0.2.0"
+version = "0.3.0"
 description = "The Accord client for Python: local-first writes, background sync, conflicts and refusals."
 readme = "README.md"
 license = "Apache-2.0"
@@ -8,7 +8,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.11"
 keywords = ["offline-first", "sync", "crdt", "local-first"]
 dependencies = [
-    "accordsync-core",
+    "accordsync-core>=0.3,<0.4",
     "httpx>=0.28",
 ]
 

@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-fastapi"
-version = "0.2.0"
+version = "0.3.0"
 description = "Accord sync server for FastAPI: router, settings and CLI."
 readme = "README.md"
 license = "Apache-2.0"
@@ -8,7 +8,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.11"
 keywords = ["offline-first", "sync", "crdt", "local-first"]
 dependencies = [
-    "accordsync-server",
+    "accordsync-server>=0.3,<0.4",
     "fastapi>=0.115",
 ]
 
