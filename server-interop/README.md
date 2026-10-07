@@ -23,8 +23,10 @@ For each seed (`tests/test_mixed_server_fleet.py`):
   served pushes and pulls (counts printed and appended to `.logs/summary.jsonl`).
 
 `test_lone_surrogate_in_an_op_value_is_answered_alike` sends `"\ud800"` inside an op value to
-each server: both answer `500 {"error":"internal error"}` (PostgreSQL's jsonb refuses it) and
-store nothing.
+each server: both refuse that op (`malformed op: lone surrogate in op.value`, since PostgreSQL's
+jsonb cannot store it), apply the rest of the batch and store nothing of it.
+`test_a_lost_scope_delta_is_sent_again` loses the answer that carries a scope delta and checks the
+retry carries it again (ADR-0011, update of 2026-10-07).
 
 ```sh
 server-interop/run.sh                          # Docker, Node 22+, uv; pnpm install done in app/

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+import re
 import threading
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -100,6 +101,29 @@ def touch_device(pool: Pool, caller: Caller, ttl_ms: float) -> None:
         raise ForbiddenError(f"device {caller.device_id} belongs to another user")
 
 
+_LONE = re.compile("[\ud800-\udfff]")
+"""A lone surrogate: a decoded Python str holds a valid pair as one code point."""
+
+
+def _lone_path(value: object, path: str = "op") -> str | None:
+    """Where a lone surrogate hides in a JSON value (a key or a string), or None if nowhere."""
+    if isinstance(value, str):
+        return path if _LONE.search(value) else None
+    if isinstance(value, list):
+        for i, v in enumerate(value):
+            found = _lone_path(v, f"{path}[{i}]")
+            if found:
+                return found
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            if isinstance(k, str) and _LONE.search(k):
+                return f"{path} (a key)"
+            found = _lone_path(v, f"{path}.{k}")
+            if found:
+                return found
+    return None
+
+
 def push(ctx: SyncContext, caller: Caller, raw: Sequence[object]) -> dict[str, Any]:
     d = ctx.definition
     max_ops = d.limits.max_push_ops
@@ -114,6 +138,11 @@ def push(ctx: SyncContext, caller: Caller, raw: Sequence[object]) -> dict[str, A
     for item in raw:
         try:
             op = decode_op(item)
+            # PostgreSQL cannot store a lone surrogate (jsonb refuses it, text replaces it):
+            # refuse the op instead of failing the whole push.
+            bad = _lone_path(item)
+            if bad is not None:
+                raise ValueError(f"lone surrogate in {bad}")
         except Exception as e:
             op_id = item.get("op_id") if isinstance(item, dict) else None
             if not isinstance(op_id, str):
@@ -350,30 +379,56 @@ def _pull_once(
     with ctx.pool.connection() as conn, conn.transaction():
         conn.execute("set transaction isolation level repeatable read")
         device = conn.execute(
-            "select read_keys, needs_resync, max_op_seq from devices where device_id = %s",
+            "select read_keys, needs_resync, max_op_seq, delta_keys, delta_cursor from devices"
+            " where device_id = %s",
             (caller.device_id,),
         ).fetchone()
         if device is None:
             raise RuntimeError(f"no device row for {caller.device_id}")
         if cursor > 0 and device[1]:
             return {"resync_required": True}
-        before: list[str] = list(device[0] or [])
+        # Read scopes changed (new claims): send what entered and what left, instead of everything.
+        # A delta stays pending until the device pulls from a cursor above the one it was sent
+        # from (it then has the answer). A pull at or below that cursor is a retry of a lost
+        # answer: the delta is computed again from the keys the device had before it (ADR-0011,
+        # update of 2026-10-07).
+        pending: tuple[list[str], int] | None = (
+            (list(device[3]), int(device[4]))
+            if device[3] is not None and device[4] is not None
+            else None
+        )
+        retry = cursor > 0 and pending is not None and cursor <= pending[1]
+        before: list[str] = pending[0] if retry and pending is not None else list(device[0] or [])
         keys_changed = cursor > 0 and not same_keys(before, read)
         delta: tuple[list[tuple[str, Any]], list[str]] | None = None
         if keys_changed:
             delta = _scope_delta(conn, before, read, ctx.definition.limits.max_scope_delta)
             if delta is None:
                 return {"resync_required": True}
-            conn.execute(
-                "update devices set read_keys = %s::text[] where device_id = %s",
-                (read, caller.device_id),
-            )
         # The device has applied everything up to `cursor`: compaction may fold ops below it.
         if cursor == 0:
             conn.execute(
-                "update devices set read_keys = %s::text[], needs_resync = false, cursor = 0"
-                " where device_id = %s",
+                "update devices set read_keys = %s::text[], needs_resync = false, cursor = 0,"
+                " delta_keys = null, delta_cursor = null where device_id = %s",
                 (read, caller.device_id),
+            )
+        elif keys_changed:
+            conn.execute(
+                "update devices set cursor = greatest(cursor, %s::bigint), read_keys = %s::text[],"
+                " delta_keys = %s::text[], delta_cursor = %s::bigint where device_id = %s",
+                (
+                    cursor,
+                    read,
+                    before,
+                    pending[1] if retry and pending is not None else cursor,
+                    caller.device_id,
+                ),
+            )
+        elif pending is not None:
+            conn.execute(
+                "update devices set cursor = greatest(cursor, %s::bigint), read_keys = %s::text[],"
+                " delta_keys = null, delta_cursor = null where device_id = %s",
+                (cursor, read, caller.device_id),
             )
         else:
             conn.execute(

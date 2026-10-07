@@ -20,7 +20,7 @@ PostgreSQL:
    key, is_locked integer default 0 not null)`, plus the `migration_lock` row;
 2. `pg_advisory_lock(3853314791062309107)` (released in `finally`);
 3. one transaction: read the ledger, refuse an unknown or out-of-order executed migration, run the
-   pending migrations (the SQL Kysely generates for `0001_meta` … `0006_compacted_op_hash`,
+   pending migrations (the SQL Kysely generates for `0001_meta` … `0007_pending_scope_delta`,
    statement for statement), insert each name with `new Date().toISOString()`'s format.
 
 A TypeScript and a Python server starting at once on the same empty database therefore serialise

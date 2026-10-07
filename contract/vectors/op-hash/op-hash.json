@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "assign a string, no deps",
+      "op": {
+        "op_id": "dev-A:1",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00001:dev-A",
+        "kind": "assign",
+        "value": "awa",
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00001:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:1\",\"record\":\"dossier:1\",\"value\":\"awa\"}",
+      "hash": "93eaa3e65cbe3308c1fcecd9fd1dce2c0dc967aeef483ee6529f828e27ab0cc5"
+    },
+    {
+      "name": "assign with deps",
+      "op": {
+        "op_id": "dev-A:2",
+        "record": "dossier:1",
+        "field": "status",
+        "hlc": "1767225600000:00002:dev-A",
+        "kind": "assign",
+        "value": "draft",
+        "deps": [
+          "dev-B:7",
+          "dev-A:1"
+        ]
+      },
+      "canonical": "{\"deps\":[\"dev-B:7\",\"dev-A:1\"],\"field\":\"status\",\"hlc\":\"1767225600000:00002:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:2\",\"record\":\"dossier:1\",\"value\":\"draft\"}",
+      "hash": "bb48c01aa51d506a8f5e14254e7381d84d735d2c679a2e2262c6e86331b63157"
+    },
+    {
+      "name": "inc",
+      "op": {
+        "op_id": "dev-A:3",
+        "record": "dossier:1",
+        "field": "visits",
+        "hlc": "1767225600000:00003:dev-A",
+        "kind": "inc",
+        "by": 3
+      },
+      "canonical": "{\"by\":3,\"field\":\"visits\",\"hlc\":\"1767225600000:00003:dev-A\",\"kind\":\"inc\",\"op_id\":\"dev-A:3\",\"record\":\"dossier:1\"}",
+      "hash": "2801985f21324b4ce075cb4576a2d663eeefc7f29880f09ae3a21ac04f363f9e"
+    },
+    {
+      "name": "inc by a negative number",
+      "op": {
+        "op_id": "dev-A:4",
+        "record": "dossier:1",
+        "field": "visits",
+        "hlc": "1767225600000:00004:dev-A",
+        "kind": "inc",
+        "by": -2
+      },
+      "canonical": "{\"by\":-2,\"field\":\"visits\",\"hlc\":\"1767225600000:00004:dev-A\",\"kind\":\"inc\",\"op_id\":\"dev-A:4\",\"record\":\"dossier:1\"}",
+      "hash": "32b8716ebd390d746363cd5836d4a527669cb8a2c08b0bea98bb96e8d63283d5"
+    },
+    {
+      "name": "add without deps (first add)",
+      "op": {
+        "op_id": "dev-A:5",
+        "record": "dossier:1",
+        "field": "docs",
+        "hlc": "1767225600000:00005:dev-A",
+        "kind": "add",
+        "element": "cni.pdf"
+      },
+      "canonical": "{\"element\":\"cni.pdf\",\"field\":\"docs\",\"hlc\":\"1767225600000:00005:dev-A\",\"kind\":\"add\",\"op_id\":\"dev-A:5\",\"record\":\"dossier:1\"}",
+      "hash": "4ab8a65ea9323aa8597aaee987d52ffe9c8868f96b3468718e4a7d23e82a01a5"
+    },
+    {
+      "name": "add with deps",
+      "op": {
+        "op_id": "dev-A:6",
+        "record": "dossier:1",
+        "field": "docs",
+        "hlc": "1767225600000:00006:dev-A",
+        "kind": "add",
+        "element": "cni.pdf",
+        "deps": [
+          "dev-A:5"
+        ]
+      },
+      "canonical": "{\"deps\":[\"dev-A:5\"],\"element\":\"cni.pdf\",\"field\":\"docs\",\"hlc\":\"1767225600000:00006:dev-A\",\"kind\":\"add\",\"op_id\":\"dev-A:6\",\"record\":\"dossier:1\"}",
+      "hash": "dd6b4124f37e4a319be29e2c1a1b5a0059302b8b9bea89d7f8866f6659249b4c"
+    },
+    {
+      "name": "add a number",
+      "op": {
+        "op_id": "dev-A:7",
+        "record": "dossier:1",
+        "field": "docs",
+        "hlc": "1767225600000:00007:dev-A",
+        "kind": "add",
+        "element": 42
+      },
+      "canonical": "{\"element\":42,\"field\":\"docs\",\"hlc\":\"1767225600000:00007:dev-A\",\"kind\":\"add\",\"op_id\":\"dev-A:7\",\"record\":\"dossier:1\"}",
+      "hash": "a277d5174a6f37ca349c7c2f9e6bd7b9a31a860e0a381cbd8673566ff341960e"
+    },
+    {
+      "name": "remove",
+      "op": {
+        "op_id": "dev-A:8",
+        "record": "dossier:1",
+        "field": "docs",
+        "hlc": "1767225600000:00008:dev-A",
+        "kind": "remove",
+        "element": "cni.pdf",
+        "deps": [
+          "dev-A:5",
+          "dev-A:6"
+        ]
+      },
+      "canonical": "{\"deps\":[\"dev-A:5\",\"dev-A:6\"],\"element\":\"cni.pdf\",\"field\":\"docs\",\"hlc\":\"1767225600000:00008:dev-A\",\"kind\":\"remove\",\"op_id\":\"dev-A:8\",\"record\":\"dossier:1\"}",
+      "hash": "234ee64a07b2feb1d11cba84de87a5f68362e6d6afe648dbc4240180bc97ba6e"
+    },
+    {
+      "name": "non-ASCII",
+      "op": {
+        "op_id": "dev-A:9",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00009:dev-A",
+        "kind": "assign",
+        "value": "Thiès, Sénégal",
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00009:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:9\",\"record\":\"dossier:1\",\"value\":\"Thiès, Sénégal\"}",
+      "hash": "ce70f99f123b46d380091adf1a7db7430392631f8effaec1874242fddee1ab24"
+    },
+    {
+      "name": "emoji (astral)",
+      "op": {
+        "op_id": "dev-A:10",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00010:dev-A",
+        "kind": "assign",
+        "value": "ok 😀",
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00010:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:10\",\"record\":\"dossier:1\",\"value\":\"ok 😀\"}",
+      "hash": "7a54ad56c735e10b35c1982ba49229821a6073e458a2ad773ea1e06eba173953"
+    },
+    {
+      "name": "U+E000 and U+FFEF (sort above surrogates by code point, below by code unit)",
+      "op": {
+        "op_id": "dev-A:11",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00011:dev-A",
+        "kind": "assign",
+        "value": {
+          "": 1,
+          "😀": 2,
+          "￯": 3
+        },
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00011:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:11\",\"record\":\"dossier:1\",\"value\":{\"😀\":2,\"\":1,\"￯\":3}}",
+      "hash": "85ca3e3ed3c8a23386cf10bebbb209b2e326698d04cba2beb79deef8ccb62730"
+    },
+    {
+      "name": "integer-like keys: array-index keys first, in numeric order, then the rest by code unit",
+      "op": {
+        "op_id": "dev-A:12",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00012:dev-A",
+        "kind": "assign",
+        "value": {
+          "1": "d",
+          "9": "b",
+          "10": "a",
+          "a": "c"
+        },
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00012:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:12\",\"record\":\"dossier:1\",\"value\":{\"1\":\"d\",\"9\":\"b\",\"10\":\"a\",\"a\":\"c\"}}",
+      "hash": "a9dbbf7776851a34aca3fdc3c0287a7c1c62fffa550449c5899717707c0cdaae"
+    },
+    {
+      "name": "1e21",
+      "op": {
+        "op_id": "dev-A:13",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00013:dev-A",
+        "kind": "assign",
+        "value": 1e+21,
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00013:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:13\",\"record\":\"dossier:1\",\"value\":1e+21}",
+      "hash": "7acf571112c98cb38325ca5864d310d2502c0ff43ea300a89c2145bd0b74ea8f"
+    },
+    {
+      "name": "1e-7",
+      "op": {
+        "op_id": "dev-A:14",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00014:dev-A",
+        "kind": "assign",
+        "value": 1e-7,
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00014:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:14\",\"record\":\"dossier:1\",\"value\":1e-7}",
+      "hash": "8125274e983a3fd0c8388df239a2df8e11459d8a261f4c03672448555ea3b276"
+    },
+    {
+      "name": "-0 (as JSON.parse reads it)",
+      "op": {
+        "op_id": "dev-A:15",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00015:dev-A",
+        "kind": "assign",
+        "value": -0,
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00015:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:15\",\"record\":\"dossier:1\",\"value\":0}",
+      "hash": "dddc6bfc4066694c33b5d2576c46ce4d7a17e89e9e620ecc6b698592184f5702"
+    },
+    {
+      "name": "decimals",
+      "op": {
+        "op_id": "dev-A:16",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00016:dev-A",
+        "kind": "assign",
+        "value": [
+          0.1,
+          1.5,
+          -1.5e+300,
+          5e-324
+        ],
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00016:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:16\",\"record\":\"dossier:1\",\"value\":[0.1,1.5,-1.5e+300,5e-324]}",
+      "hash": "226112483f6ad02795addbde629ee93050341cea297dd5be3eec78b3010603f0"
+    },
+    {
+      "name": "nested objects",
+      "op": {
+        "op_id": "dev-A:17",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00017:dev-A",
+        "kind": "assign",
+        "value": {
+          "z": {
+            "b": [
+              1,
+              {
+                "y": true,
+                "x": null
+              }
+            ],
+            "a": "é"
+          },
+          "a": []
+        },
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00017:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:17\",\"record\":\"dossier:1\",\"value\":{\"a\":[],\"z\":{\"a\":\"é\",\"b\":[1,{\"x\":null,\"y\":true}]}}}",
+      "hash": "02994fcd117874988f15c572ae4a2c6e8f929f3cd07aff28b6aac9000291a0a2"
+    },
+    {
+      "name": "empty object",
+      "op": {
+        "op_id": "dev-A:18",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00018:dev-A",
+        "kind": "assign",
+        "value": {},
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00018:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:18\",\"record\":\"dossier:1\",\"value\":{}}",
+      "hash": "d806aad3f2664de39cecc3f6d46fcc598f6dd8f7ad7e181036ab8b2d6c5c0523"
+    },
+    {
+      "name": "empty array",
+      "op": {
+        "op_id": "dev-A:19",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00019:dev-A",
+        "kind": "assign",
+        "value": [],
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00019:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:19\",\"record\":\"dossier:1\",\"value\":[]}",
+      "hash": "11eea548f9b925561b44a129e3fae14d21a336e6e095d951b136fa3ac29e38e2"
+    },
+    {
+      "name": "null value",
+      "op": {
+        "op_id": "dev-A:20",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00020:dev-A",
+        "kind": "assign",
+        "value": null,
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00020:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:20\",\"record\":\"dossier:1\",\"value\":null}",
+      "hash": "52c45d950545f3a35dde437f83c064f1c8570aba840ebc20dd33d78fec2dee1e"
+    },
+    {
+      "name": "escapes: quote, backslash, control characters, U+2028",
+      "op": {
+        "op_id": "dev-A:21",
+        "record": "dossier:1",
+        "field": "agent",
+        "hlc": "1767225600000:00021:dev-A",
+        "kind": "assign",
+        "value": "\"q\"\\ \n\t\u0000\u001f ",
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"agent\",\"hlc\":\"1767225600000:00021:dev-A\",\"kind\":\"assign\",\"op_id\":\"dev-A:21\",\"record\":\"dossier:1\",\"value\":\"\\\"q\\\"\\\\ \\n\\t\\u0000\\u001f \"}",
+      "hash": "2473831bcebd46628d91280b852be841d9a7ddeb8e3ab9b9d5379bc4139960db"
+    },
+    {
+      "name": "mixed-case device and record ids",
+      "op": {
+        "op_id": "Tab_9:1",
+        "record": "dossier:Ab-é",
+        "field": "zone",
+        "hlc": "1767225600000:00000:Tab_9",
+        "kind": "assign",
+        "value": true,
+        "deps": []
+      },
+      "canonical": "{\"deps\":[],\"field\":\"zone\",\"hlc\":\"1767225600000:00000:Tab_9\",\"kind\":\"assign\",\"op_id\":\"Tab_9:1\",\"record\":\"dossier:Ab-é\",\"value\":true}",
+      "hash": "24b77e60f4bc953003d6b21ac400a00aca9456505d5f70bcd3f0e2ce4c735252"
+    }
+  ]
+}

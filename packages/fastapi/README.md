@@ -58,4 +58,4 @@ ACCORD_DATABASE_URL=postgresql://... python -m accordsync_fastapi compact --defi
 - Put TLS and request-size limits of your proxy in front as usual; the body limit
   (`limits.max_body_bytes`) is enforced while reading the body.
 - `examples/fastapi_app` in this repository serves the conformance profile and passes the shared
-  server conformance suite (63/63). Its control API is for tests only (`ACCORD_CONTROL=1`).
+  server conformance suite (68/68). Its control API is for tests only (`ACCORD_CONTROL=1`).

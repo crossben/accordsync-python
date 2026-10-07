@@ -6,7 +6,7 @@
 
 The Python server uses the exact PostgreSQL schema of `@accordsync/server` and records migrations
 in the same ledger: Kysely's `kysely_migration` table, same migration names (`0001_meta` …
-`0006_compacted_op_hash`), same lock (Kysely's advisory lock; see ADR-Y06, which corrects the
+`0007_pending_scope_delta`), same lock (Kysely's advisory lock; see ADR-Y06, which corrects the
 lock row first named here).
 The PHP port made the same decision (its ADR-P02). A database created by any of the three servers is
 recognised and upgraded by the others; new migrations are written in the Accord repository first.

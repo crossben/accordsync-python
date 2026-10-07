@@ -10,7 +10,9 @@
   `conformance`.
 - **pytest** covers what the suite cannot reach: definition validation, auth (HS256 and a local
   JWKS), the token bucket, `Number()` parsing, `op_hash` against hashes computed by the TypeScript
-  server (non-ASCII, astral and lone surrogates), the migration ledger in both directions, CORS,
+  server (non-ASCII, astral and lone surrogates) and against the shared golden vectors
+  (`contract/vectors/op-hash/op-hash.json`; their canonical JSON is checked in the core's tests),
+  the migration ledger in both directions, CORS,
   WSGI and the CLI.
 - Tests needing PostgreSQL **skip** unless `ACCORD_TEST_DATABASE_URL` names a server where they may
   create databases (each test gets a fresh one, dropped afterwards). They do not start a container
@@ -19,4 +21,7 @@
   (an installed Accord checkout) and `node`; otherwise they skip.
 - **Planted bugs** (each caught by the suite, see the Y4 report): no record lock; unsorted record
   locks (deadlocks); pulls ignoring `accord_horizon()`; no scope check for new records; a reused
-  compacted id acked without comparing `op_hash`; a dropped exit item (feed and scope delta).
+  compacted id acked without comparing `op_hash`; a dropped exit item (feed and scope delta); read
+  keys saved without the pending-delta columns (Accord ADR-0011, update of 2026-10-07: a lost delta
+  is then never resent; caught by the suite's three lost-delta tests and the mixed-server fleet's
+  `test_a_lost_scope_delta_is_sent_again[py]`).

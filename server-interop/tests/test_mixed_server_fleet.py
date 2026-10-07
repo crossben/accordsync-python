@@ -47,7 +47,7 @@ COMPACT_AT = 60
 SCOPE_AT = 110
 SHARED = ["dossier:1", "dossier:2", "dossier:é"]
 THIES = "dossier:4"  # created by awa in zone thies; moussa gets thies mid-run
-MIGRATIONS = 6
+MIGRATIONS = 7
 
 AWKWARD = [None, 2.5, 1e21, "é", "", "😀", "s0", 0, -1]
 ELEMENTS = ["doc-0", "doc-1", 0, 1, 2.5, "", "😀", "é"]
@@ -209,11 +209,9 @@ def _fleet(seed: int, rng: random.Random, url: str, served: Served, migrated_by:
                     moussa = _scope_change(server, awa)
                     for d in devices:
                         if not is_awa[d.device_id]:
+                            # The first pull with the new token may be lost: the scope delta
+                            # stays pending until it is received (ADR-0011, 2026-10-07).
                             d.set_token(moussa)
-                            # Known bug in both servers (see test_a_lost_scope_delta_is_sent_again):
-                            # the scope delta is sent once; if that page is lost, never again. So
-                            # the first pull with the new token goes over a healthy network.
-                            d.sync(lossy=False)
                     set_loss(LOSS)
 
         # Heal the network, then sync everyone until nothing is pending and all are current.
@@ -406,8 +404,8 @@ def _scope_change(server: Callable[[], str], awa: str) -> str:
 
 def test_lone_surrogate_in_an_op_value_is_answered_alike() -> None:
     """A lone surrogate (valid JSON text: "\\ud800") inside an op value, sent to each server.
-    PostgreSQL's jsonb cannot store it; both servers must answer the same way and store
-    nothing, and keep serving afterwards."""
+    PostgreSQL's jsonb cannot store it; both servers refuse that op as malformed (same reason,
+    same path), apply the rest of the batch, store nothing of it, and keep serving afterwards."""
     url = recreate_database()
     migrate_py(url)
     answers: dict[str, tuple[int, Any]] = {}
@@ -437,15 +435,19 @@ def test_lone_surrogate_in_an_op_value_is_answered_alike() -> None:
         print(json.dumps({"lone_surrogate": answers}))
         stored = query(url, "select op_id from feed where op::text like '%%client_name%%'")
         assert stored == [], stored
-    assert answers["ts"][0] == answers["py"][0], answers
+    assert answers["ts"][0] == answers["py"][0] == 200, answers
+    for name, (_, body) in answers.items():
+        assert len(body["acked"]) == 1, (name, body)
+        assert [r["reason"] for r in body["refused"]] == [
+            "malformed op: lone surrogate in op.value"
+        ], (name, body)
 
 
 @pytest.mark.parametrize("name", sorted(SERVERS))
-@pytest.mark.xfail(strict=True, reason="known bug in both servers: a lost scope delta is lost")
 def test_a_lost_scope_delta_is_sent_again(name: str) -> None:
     """A device whose read keys changed gets the history of the records entering its scope in its
-    next pull (ADR-0011). If that answer is lost, the retry (same cursor) must carry it again;
-    both servers record the new keys with the first answer and never send it again."""
+    next pull (ADR-0011). If that answer is lost, the retry (same cursor) must carry it again: the
+    delta stays pending until a pull from a later cursor (ADR-0011, update of 2026-10-07)."""
     url = recreate_database()
     migrate_py(url)
     with both_servers(url, f"lost-delta-{name}"):

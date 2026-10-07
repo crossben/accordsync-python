@@ -54,5 +54,5 @@ python manage.py accord_compact
   thread while it waits on PostgreSQL.
 - Rate limits are per process (in memory).
 - `examples/django_app` in this repository serves the conformance profile with waitress and
-  passes the shared server conformance suite (63/63). Its control API is for tests only
+  passes the shared server conformance suite (68/68). Its control API is for tests only
   (`ACCORD_CONTROL=1`).

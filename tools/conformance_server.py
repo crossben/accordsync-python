@@ -29,6 +29,7 @@ from urllib.parse import parse_qs
 from wsgiref.simple_server import WSGIRequestHandler, WSGIServer, make_server
 
 import jwt
+import psycopg
 from accordsync_core import conflict, counter, define_schema, lww, set_
 from accordsync_server import (
     Access,
@@ -133,6 +134,40 @@ def make_control(server: AccordServer) -> Callable[[str, str, str], object]:
     secret = PROFILE["auth"]["hs256Secret"]
     issuer = PROFILE["auth"].get("issuer")
 
+    # The record lock held by /hold-record: a connection of its own, in an open transaction.
+    hold: list[tuple[psycopg.Connection[tuple[Any, ...]], int]] = []
+    hold_lock = threading.Lock()
+
+    def release() -> None:
+        with hold_lock:
+            if hold:
+                conn, _ = hold.pop()
+                try:
+                    conn.rollback()
+                finally:
+                    conn.close()
+
+    def hold_record(record: str) -> object:
+        with hold_lock:
+            if hold:
+                raise HttpError(409, "a record is already held")
+            conninfo = server.pool.conninfo
+            conn = psycopg.connect(conninfo() if callable(conninfo) else conninfo)
+            try:
+                found = conn.execute(
+                    "select record from records where record = %s for update", (record,)
+                ).fetchone()
+                if found is None:
+                    raise HttpError(404, "unknown record")
+                row = conn.execute("select pg_backend_pid()").fetchone()
+                assert row is not None
+                hold.append((conn, int(row[0])))
+            except BaseException:
+                conn.rollback()
+                conn.close()
+                raise
+            return {}
+
     def control(method: str, path: str, query: str) -> object:
         q = parse_qs(query, keep_blank_values=True)
         if method == "GET" and path == "/token":
@@ -150,6 +185,7 @@ def make_control(server: AccordServer) -> Callable[[str, str, str], object]:
             claims["exp"] = now + int(float((q.get("exp_in") or ["3600"])[0]))
             return {"token": jwt.encode(claims, secret, algorithm="HS256")}
         if method == "POST" and path == "/reset":
+            release()
             with server.pool.connection() as conn:
                 conn.execute("truncate feed, records, devices, compacted_ops restart identity")
             server.reset_rate_limits()
@@ -172,6 +208,27 @@ def make_control(server: AccordServer) -> Callable[[str, str, str], object]:
                 ).rowcount
             if n == 0:
                 raise HttpError(404, "unknown device")
+            return {}
+        if method == "POST" and path == "/hold-record":
+            record = (q.get("record") or [""])[0]
+            if not record:
+                raise HttpError(400, "record is required")
+            return hold_record(record)
+        if method == "GET" and path == "/held":
+            with hold_lock:
+                pid = hold[0][1] if hold else None
+            if pid is None:
+                return {"waiting": 0}
+            with server.pool.connection() as conn:
+                waiting = conn.execute(
+                    "select count(*) from pg_stat_activity"
+                    " where %s::int = any(pg_blocking_pids(pid))",
+                    (pid,),
+                ).fetchone()
+            assert waiting is not None
+            return {"waiting": int(waiting[0])}
+        if method == "POST" and path == "/release":
+            release()
             return {}
         raise HttpError(404, "not found")
 

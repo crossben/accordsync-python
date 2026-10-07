@@ -133,6 +133,12 @@ def _m0006(cur: psycopg.Cursor[tuple[object, ...]]) -> None:
     cur.execute('alter table "compacted_ops" add column "op_hash" text')
 
 
+def _m0007(cur: psycopg.Cursor[tuple[object, ...]]) -> None:
+    # A scope delta stays pending until the device shows it received it (ADR-0011, update of
+    # 2026-10-07).
+    cur.execute("alter table devices add column delta_keys text[], add column delta_cursor bigint")
+
+
 MIGRATIONS: tuple[tuple[str, Callable[[psycopg.Cursor[tuple[object, ...]]], None]], ...] = (
     ("0001_meta", _m0001),
     ("0002_sync", _m0002),
@@ -140,6 +146,7 @@ MIGRATIONS: tuple[tuple[str, Callable[[psycopg.Cursor[tuple[object, ...]]], None
     ("0004_record_state", _m0004),
     ("0005_concurrent_pushes", _m0005),
     ("0006_compacted_op_hash", _m0006),
+    ("0007_pending_scope_delta", _m0007),
 )
 NAMES = tuple(name for name, _ in MIGRATIONS)
 

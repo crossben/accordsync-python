@@ -91,3 +91,29 @@ def test_python_and_typescript_create_the_same_schema(database_url: str) -> None
         conn.execute("create schema public")
     run_ts("migrate", database_url)
     assert columns(database_url) == ours
+
+
+def test_typescript_runs_0007_on_a_database_python_migrated_to_0006(database_url: str) -> None:
+    migrate(database_url, target="0006_compacted_op_hash")
+    run_ts("migrate", database_url)
+    assert [n for n, _ in ledger(database_url)] == list(NAMES)
+    assert NAMES[-1] == "0007_pending_scope_delta"
+    assert migrate(database_url) == []
+
+
+def test_python_runs_0007_on_a_database_typescript_left_at_0006(database_url: str) -> None:
+    run_ts("migrate", database_url)
+    ts_columns = columns(database_url)
+    # Kysely's down of 0007, as the TypeScript migration writes it.
+    with psycopg.connect(database_url, autocommit=True) as conn:
+        conn.execute("alter table devices drop column delta_keys, drop column delta_cursor")
+        conn.execute("delete from kysely_migration where name = '0007_pending_scope_delta'")
+    assert migrate(database_url) == ["0007_pending_scope_delta"]
+    assert columns(database_url) == ts_columns
+
+
+def test_0007_adds_the_pending_delta_columns(database_url: str) -> None:
+    migrate(database_url)
+    devices = [c for c in columns(database_url) if c[0] == "devices"]
+    assert ("devices", "delta_cursor", "bigint", "YES", None) in devices
+    assert ("devices", "delta_keys", "ARRAY", "YES", None) in devices

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
+import pytest
 from accordsync_core import decode_op, encode_op
 from accordsync_server import op_hash
 
@@ -42,3 +44,16 @@ def test_op_hash_is_lowercase_sha256_hex() -> None:
 def test_op_hash_matches_the_live_typescript_server() -> None:
     """With ACCORD_APP_DIR: recomputes the vectors with the TypeScript code itself."""
     assert json.loads(run_ts("hash", stdin=OPS_JSON)) == TS_HASHES
+
+
+_VECTORS = json.loads(
+    (
+        Path(__file__).resolve().parents[3] / "contract" / "vectors" / "op-hash" / "op-hash.json"
+    ).read_text("utf-8")
+)
+
+
+@pytest.mark.parametrize("case", _VECTORS["cases"], ids=lambda c: c["name"])
+def test_op_hash_golden_vector(case: dict[str, Any]) -> None:
+    assert op_hash(case["op"]) == case["hash"]
+    assert op_hash(encode_op(decode_op(case["op"]))) == case["hash"]
