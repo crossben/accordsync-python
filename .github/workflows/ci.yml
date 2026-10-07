@@ -90,6 +90,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
+          # A server started with `uv run` is still running when the job ends; pruning the cache
+          # then fails (the runner is discarded anyway).
+          prune-cache: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -177,6 +180,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
+          # A server started with `uv run` is still running when the job ends; pruning the cache
+          # then fails (the runner is discarded anyway).
+          prune-cache: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -231,6 +237,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
+          # A server started with `uv run` is still running when the job ends; pruning the cache
+          # then fails (the runner is discarded anyway).
+          prune-cache: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
