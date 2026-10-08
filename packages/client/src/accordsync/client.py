@@ -151,6 +151,8 @@ class AccordClient:
         self._round_guard = threading.Lock()
         self._round: Future[None] | None = None
         self._round_thread: int | None = None
+        # A write landed during a round, after its push: the loop runs another one soon after.
+        self._again = False
 
         # Background sync.
         self._cond = threading.Condition()
@@ -521,6 +523,9 @@ class AccordClient:
         with self._cond:
             running = self._running
         if running and failures == 0:
+            with self._round_guard:
+                if self._round is not None:
+                    self._again = True
             self._schedule(0.05)
 
     def _loop(self, generation: int) -> None:
@@ -546,7 +551,11 @@ class AccordClient:
                 # Jitter: devices don't retry in lockstep.
                 self._schedule(base * (0.5 + self._random() / 2))
             else:
-                self._schedule(self._sync_interval)
+                # A write during the round (ours or a manual sync() we joined) must not wait
+                # a full interval.
+                with self._round_guard:
+                    again, self._again = self._again, False
+                self._schedule(0.05 if again else self._sync_interval)
 
     # ── internals ─────────────────────────────────────────────────────────
 

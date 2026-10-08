@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import random
 import threading
+import time
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -585,6 +586,61 @@ def test_background_sync_picks_up_writes_soon(world: World) -> None:
     awa.on("synced", lambda _: second.set())
     awa.assign("dossier:1", "zone", "dakar")
     assert second.wait(5)  # well before sync_interval
+    assert awa.status().pending == 0
+    awa.close()
+
+
+def test_a_write_during_a_round_is_synced_soon_after_it(world: World) -> None:
+    awa = AccordClient.open(
+        schema=schema,
+        storage=MemoryStorage(),
+        transport=world.server.transport_for("awa"),
+        device_id="awa-again",
+        sync_interval=60,
+    )
+    wrote = threading.Event()
+
+    def write_once(_: Any) -> None:
+        if not wrote.is_set():
+            wrote.set()
+            awa.assign("dossier:1", "zone", "dakar")  # inside the round, after its push
+
+    awa.on("synced", write_once)
+    awa.start()
+    assert wrote.wait(5)
+    deadline = time.monotonic() + 3
+    while awa.status().pending and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert awa.status().pending == 0  # well before sync_interval
+    awa.close()
+
+
+def test_a_write_during_a_manual_sync_is_synced_soon_after_it(world: World) -> None:
+    awa = AccordClient.open(
+        schema=schema,
+        storage=MemoryStorage(),
+        transport=world.server.transport_for("awa"),
+        device_id="awa-again-manual",
+        sync_interval=60,
+    )
+    awa.start()
+    first = threading.Event()
+    awa.on("synced", lambda _: first.set())
+    assert first.wait(5)
+    wrote = threading.Event()
+
+    def write_once(_: Any) -> None:
+        if not wrote.is_set():
+            wrote.set()
+            awa.assign("dossier:1", "zone", "dakar")
+            time.sleep(0.2)  # the loop wakes mid-round and joins it
+
+    awa.on("synced", write_once)
+    awa.sync()
+    assert wrote.is_set()
+    deadline = time.monotonic() + 3
+    while awa.status().pending and time.monotonic() < deadline:
+        time.sleep(0.02)
     assert awa.status().pending == 0
     awa.close()
 
