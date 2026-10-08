@@ -623,10 +623,11 @@ def test_a_write_during_a_manual_sync_is_synced_soon_after_it(world: World) -> N
         device_id="awa-again-manual",
         sync_interval=60,
     )
-    awa.start()
     first = threading.Event()
     awa.on("synced", lambda _: first.set())
+    awa.start()
     assert first.wait(5)
+    awa.sync()  # joins the first round if it is still ending, so the next one is ours
     wrote = threading.Event()
 
     def write_once(_: Any) -> None:
