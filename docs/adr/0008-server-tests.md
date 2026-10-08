@@ -24,4 +24,8 @@
   compacted id acked without comparing `op_hash`; a dropped exit item (feed and scope delta); read
   keys saved without the pending-delta columns (Accord ADR-0011, update of 2026-10-07: a lost delta
   is then never resent; caught by the suite's three lost-delta tests and the mixed-server fleet's
-  `test_a_lost_scope_delta_is_sent_again[py]`).
+  `test_a_lost_scope_delta_is_sent_again[py]`); a scope delta judged on current
+  scopes with unbounded history (ADR-0011, update 2026-10-07 b: the delta is judged on each
+  record's scopes at the cursor, its history bounded to `pos <= cursor`; the old code fails four
+  conformance tests, among them the record moved into a shared key and the record moved out since
+  the cursor).

@@ -402,7 +402,7 @@ def _pull_once(
         keys_changed = cursor > 0 and not same_keys(before, read)
         delta: tuple[list[tuple[str, Any]], list[str]] | None = None
         if keys_changed:
-            delta = _scope_delta(conn, before, read, ctx.definition.limits.max_scope_delta)
+            delta = _scope_delta(conn, cursor, before, read, ctx.definition.limits.max_scope_delta)
             if delta is None:
                 return {"resync_required": True}
         # The device has applied everything up to `cursor`: compaction may fold ops below it.
@@ -503,34 +503,46 @@ def _pull_once(
 
 
 def _scope_delta(
-    conn: Conn, before: Sequence[str], after: Sequence[str], max_records: int
+    conn: Conn, cursor: int, before: Sequence[str], after: Sequence[str], max_records: int
 ) -> tuple[list[tuple[str, Any]], list[str]] | None:
-    """History of every record now visible that was not, and an exit for every record no longer
-    visible; None when more than `max_records` change (a full resync is cheaper then)."""
+    """What a change of read keys means for a device at `cursor`: the history, up to the cursor,
+    of every record visible now (under `after`) that it did not have, and an exit for every record
+    it had that it may no longer see. "Had" is judged at the cursor: a record's scopes as of
+    `cursor` (the `scopes_before` of its first scope row above the cursor, or its current scopes if
+    none) against the keys the device had (`before`). The feed from the cursor, read with the new
+    keys, carries every later move and op, so nothing written after a record left is sent
+    (ADR-0011, 2026-10-07 b). None when more than `max_records` change (a full resync is cheaper
+    then)."""
     was, now = list(before), list(after)
-    entering = conn.execute(
-        "select record from records where scopes && %s::text[] and not (scopes && %s::text[])"
-        " limit %s",
-        (now, was, max_records + 1),
+    both = list(dict.fromkeys([*was, *now]))
+    rows = conn.execute(
+        "with moved as ("
+        " select distinct on (record) record, scopes_before as scopes from feed"
+        " where kind = 'scope' and pos > %(cursor)s::bigint order by record, pos, seq"
+        "), at_cursor as ("
+        " select r.record, r.scopes from records r where r.scopes && %(both)s::text[]"
+        " and not exists (select 1 from moved m where m.record = r.record)"
+        " union all select m.record, m.scopes from moved m"
+        ")"
+        " select record, scopes && %(now)s::text[] as entering from at_cursor"
+        " where (scopes && %(now)s::text[]) <> (scopes && %(was)s::text[])"
+        " order by record limit %(lim)s",
+        {"cursor": cursor, "both": both, "now": now, "was": was, "lim": max_records + 1},
     ).fetchall()
-    leaving = conn.execute(
-        "select record from records where scopes && %s::text[] and not (scopes && %s::text[])"
-        " limit %s",
-        (was, now, max_records + 1),
-    ).fetchall()
-    if len(entering) + len(leaving) > max_records:
+    if len(rows) > max_records:
         return None
+    entering = [r[0] for r in rows if r[1]]
     history: list[tuple[str, Any]] = []
     if entering:
         history = [
             (r[0], r[1])
             for r in conn.execute(
                 "select kind, op from feed where record = any(%s::text[])"
-                " and kind in ('op', 'snapshot') order by record, pos, seq",
-                ([r[0] for r in entering],),
+                " and kind in ('op', 'snapshot') and pos <= %s::bigint order by record, pos, seq",
+                (entering, cursor),
             ).fetchall()
         ]
-    return history, [r[0] for r in leaving]
+    return history, [r[0] for r in rows if not r[1]]
 
 
 def load_record(conn: Conn, definition: ServerDefinition, record: str) -> Replica:
