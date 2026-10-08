@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-django"
-version = "0.3.0"
+version = "0.3.1"
 description = "Accord sync server for Django: app, URLs and management commands."
 readme = "README.md"
 license = "Apache-2.0"

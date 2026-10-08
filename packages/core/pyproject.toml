@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-core"
-version = "0.3.0"
+version = "0.3.1"
 description = "Accord's merge core: hybrid logical clocks, operations, lww, counter, set and conflict."
 readme = "README.md"
 license = "Apache-2.0"

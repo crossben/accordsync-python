@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-server"
-version = "0.3.0"
+version = "0.3.1"
 description = "The Accord sync server for Python on PostgreSQL, framework-agnostic."
 readme = "README.md"
 license = "Apache-2.0"

@@ -1,6 +1,6 @@
 [project]
 name = "accordsync"
-version = "0.3.0"
+version = "0.3.1"
 description = "The Accord client for Python: local-first writes, background sync, conflicts and refusals."
 readme = "README.md"
 license = "Apache-2.0"
