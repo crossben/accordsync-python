@@ -1,6 +1,6 @@
 [project]
 name = "accordsync-fastapi"
-version = "0.3.1"
+version = "0.3.2"
 description = "Accord sync server for FastAPI: router, settings and CLI."
 readme = "README.md"
 license = "Apache-2.0"

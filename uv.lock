@@ -19,7 +19,7 @@ members = [
 
 [[package]]
 name = "accordsync"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packages/client" }
 dependencies = [
     { name = "accordsync-core" },
@@ -34,12 +34,12 @@ requires-dist = [
 
 [[package]]
 name = "accordsync-core"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packages/core" }
 
 [[package]]
 name = "accordsync-django"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packages/django" }
 dependencies = [
     { name = "accordsync-server" },
@@ -55,7 +55,7 @@ requires-dist = [
 
 [[package]]
 name = "accordsync-fastapi"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packages/fastapi" }
 dependencies = [
     { name = "accordsync-server" },
@@ -70,7 +70,7 @@ requires-dist = [
 
 [[package]]
 name = "accordsync-server"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packages/server" }
 dependencies = [
     { name = "accordsync-core" },
@@ -87,7 +87,7 @@ requires-dist = [
 
 [[package]]
 name = "accordsync-workspace"
-version = "0.3.1"
+version = "0.3.2"
 source = { virtual = "." }
 dependencies = [
     { name = "accordsync" },

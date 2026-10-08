@@ -14,7 +14,7 @@ Two things live here:
   [`@accordsync/server`](https://github.com/crossben/accordsync), so every existing client
   (TypeScript, React Native, Flutter) syncs with it unchanged.
 
-> **Status: v0.3.0.** Pre-1.0: the API may still change between minor versions. Website and docs:
+> **Status: v0.3.2.** Pre-1.0: the API may still change between minor versions. Website and docs:
 > [accord.benhattab.pro](https://accord.benhattab.pro/docs/python/).
 
 ```sh
